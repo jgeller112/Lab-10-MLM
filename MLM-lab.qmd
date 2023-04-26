@@ -1,0 +1,213 @@
+---
+title: "Lab 10 - Multilevel Models"
+output: html
+---
+
+## Data
+
+Today's lab uses data from a study done by Coyne et al. (2019) which looked at the impact of a high-quality evidenced vocabulary instruction intervention in kindergarten.The data consists of 1,428 students nested in 233 clusters/classrooms (`clu_id`).
+
+The treatment group received supplemental small-group vocabulary instruction in addition to the whole-group instruction; the control group receiver only whole-group vocabulary instruction. (The observations were not independent because students were nested within classrooms.
+
+The question we want to answer is: Does supplemental small-group kindergarten vocabulary instruction intervention increase student's knowledge of the vocabulary words taught in the intervention? Researchers measured vocabulary knowledge using an ETW (`ETW_SpringK`) which assessed the student's ability to explain the meaning of a given word . The researcher administered the ETW assessment after the intervention concluded, spring of kindergarten. In the sample, ETW scores ranged from 0 to 52 (the max score), with a mean of 13.65 and standard deviation of 11.10. We are going to use two variables to try to answer our question : TRT (1 = treatment and 0 (control)) and PPVT (Peabody Picture Vocabulary Test; **`PPVT_FallK`**) which is students' vocabulary scores before the intervention.
+
+```{r}
+# read in data
+data <- Ch3_MLM_R
+
+```
+
+## Packages
+
+```{r}
+library(tidyverse)
+library(lme4)
+library(emmeans)
+library(ggeffects)
+
+```
+
+## MLM Lab
+
+1.  Contrast code the treatment variable
+
+```{r}
+
+head(data$trt_e)
+
+```
+
+2.  Center **`PPVT_Fallk.`** While we did not talk about centering. There are two kinds of centering you can do in MLMs. One is cluster-mean centering ($x_{ij}−x_j$) where we subtract each person's cluster mean from each observation in that cluster. There is also grand-mean centering ($x_i−x$)subtract the overall mean from each observation). Group mean centering level-1 predictors always us to test the pue within-cluster effect with confounding from between-cluster effects. Use the code from here: https://psy504-advanced-stats.netlify.app/slides/mlm/mlm-speaker#/group-mean-center-in-r to group mean center. For more information on centering I am including a link to a blog post by Patrick Curran: https://centerstat.org/centering/.
+
+```{r}
+Ch3_MLM_R_c <-  Ch3_MLM_R %>%
+  mutate(ppvt1_c=center(PPVT_FallK,  type = "CWC", cluster =clu_id)) %>%
+  mutate(treatment=ifelse(TRT==1, "treat", "control"))
+
+
+
+```
+
+3.  How much missing data is in our current dataset? What variables? MLM is generally pretty good at handling missing data as long as it is on the DV.
+
+```{r}
+
+skimr::skim(Ch3_MLM_R_c)
+
+```
+
+```{}
+```
+
+4.  Fit an unconditional means (null model)
+
+```{r}
+model1 <- lmer(ETW_SpringK ~ 1 + (1|clu_id), 
+                data = Ch3_MLM_R_c, REML=FALSE)
+
+summary(model1)
+
+
+```
+
+-   What is the ICC? Calculate it by hand from the output.
+
+```{r}
+
+icc=model_performance(model1)
+
+icc$ICC
+
+```
+
+-   Is multilevel modeling warranted here? `Yep`
+
+5.  Fit a model that includes all fixed effects (level 1 variables)
+
+```{r}
+
+model2 <- lmer(ETW_SpringK ~ ppvt1_c + trt_e +  (1|clu_id), 
+                data = Ch3_MLM_R_c, REML=FALSE)
+
+summary(model2)
+
+
+ggemmeans(model2, terms=c("ppvt1_c", "trt_e"), type = "re") %>% plot(add.data=T)
+
+```
+
+6.  Fit a model that includes the interaction between the level-1 variables.
+
+```{r}
+
+model3 <- lmer(ETW_SpringK ~ ppvt1_c*trt_e +  (1|clu_id), 
+                data = Ch3_MLM_R_c, REML=FALSE)
+
+```
+
+7.  Fit the maximal model warranted by this design (everything that should vary does vary
+
+```{r}
+
+model4 <- lmer(ETW_SpringK ~ ppvt1_c*trt_e +  (1+trt_e|clu_id), 
+                data = Ch3_MLM_R_c, REML=FALSE)
+
+```
+
+8.  Compare the models. Which one is the best? The maximum model is the best one.
+
+```{r}
+
+test_likelihoodratio(model1, model2, model3, model4)
+
+
+```
+
+9.  With the maximal model, test if the interaction is warranted in the model. It is!
+
+```{r}
+
+model_inter <- lmer(ETW_SpringK ~ ppvt1_c*trt_e +  (1+trt_e|clu_id), 
+                data = Ch3_MLM_R_c, REML=FALSE)
+model_main <- lmer(ETW_SpringK ~ ppvt1_c+trt_e +  (1+trt_e|clu_id), 
+                data = Ch3_MLM_R_c, REML=FALSE)
+
+
+test_likelihoodratio(model_main, model_inter)
+
+
+```
+
+10. Using the maximal model:
+
+-   Test model assumptions
+
+```{r}
+
+performance::check_model(model_inter)
+
+
+```
+
+-   What fixed effects are significant? in your model, follow these up with the appropriate tests (e.g., simple slopes analysis if interaction is significant).
+
+```{r}
+
+library(afex)
+
+m <- mixed(ETW_SpringK ~ ppvt1_c*trt_e +  (1+trt_e|clu_id), 
+                data = Ch3_MLM_R_c, REML=FALSE, method = "LRT")
+
+nice(m)
+
+```
+
+```{r}
+# test main effect of treatment
+emmeans(model_inter, specs="trt_e") %>%
+  pairs()
+
+```
+
+<div>
+
+> There is a main effect of treatment, $\chi^2$(1) = 184.67, p \< .001. Higher mean ETW for treatment vs. control. There is a main effect of vocabulary score,$\chi^2$(1) = 90.08, p \< .001. There is also an interaction, $\chi^2$(1) = 9.35, p \< .001.
+
+</div>
+
+-   Evaluate the variance components of your model. Use pseudo-$R^2$ to explain how much of the variance does the fixed effects portion explain in your model? How about the random part?
+
+    ```{r}
+
+    ```
+
+-   Visualize the random intercepts and slopes in in your model
+
+    ```{r}
+
+    ```
+
+-   Create a table with a summary of your model information
+
+```{r}
+modelsummary::modelsummary(model_inter)
+
+
+```
+
+11. Visualize the interaction effect between treatment and PPVT score on ETW (I would check out the `interactions` package. They have some nice features for plotting interactions.
+
+    ```{r}
+    library(interactions)
+
+    emtrends(model_inter, pairwise ~ trt_e, var="ppvt1_c")
+
+    sim_slopes(model = model_inter, pred = ppvt1_c, modx = trt_e) %>% plot()
+
+    interact_plot(model_inter, pred = ppvt1_c, modx = trt_e, plot.points = TRUE, jitter=.2, point.shape = TRUE)
+
+
+
+    ```
+
+12. Write-up the results in a paragraph or two.
