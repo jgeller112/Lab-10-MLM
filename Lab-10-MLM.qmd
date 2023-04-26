@@ -45,6 +45,8 @@ library(interactions) # plotting interactions and testing
 
 ```
 
+## Lab 
+
 1.  Contrast code the treatment variable
 
 ```{r}
@@ -67,7 +69,14 @@ library(interactions) # plotting interactions and testing
 
 ```
 
-4.  Fit an unconditional means (null model)
+4.  Create two plots: One for the relationship between PPTV and EWR and one for the relationship between TRT and EWR. Make sure you plot the between -cluster (class) variability when you graph these.
+
+    ```{r}
+
+
+    ```
+
+5.  Fit an unconditional means (null model)
 
 ```{r}
 
