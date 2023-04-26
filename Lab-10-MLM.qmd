@@ -1,0 +1,170 @@
+---
+title: "Lab 10 - Multilevel Models"
+output: 
+  tufte::tufte_html:
+    css: 
+    tufte_variant: "envisioned"
+    highlight: pygments
+    fig_height: 10
+    toc: true
+    toc_depth: 1
+execute: 
+  message: false
+  warning: false
+format: 
+  html:
+    code-fold: true
+    code-overflow: wrap
+---
+
+# Lab 10: MLM
+
+Today's lab uses data from a study conducted by Coyne et al. (2019), which examined the impact of a high-quality, evidence-based vocabulary instruction intervention in kindergarten. The data consists of 1,428 students who were nested in 233 clusters or classrooms (`clu_id`).
+
+For the at-risk youth in the classroom (*N* = 6), half were allocated to treatment and the other half to control. The treatment group received supplemental small-group vocabulary instruction in addition to the whole-group instruction, while the control group received only whole-group vocabulary instruction. Since the observations were not independent (due to students being nested within classrooms), the researchers needed to account for this in their analysis.
+
+The main question that the researchers aimed to answer was whether the supplemental small-group kindergarten vocabulary instruction intervention increased students' knowledge of the vocabulary words taught in the intervention. To measure vocabulary knowledge, the researchers used an ETW (ETW_SpringK) assessment, which evaluated students' ability to explain the meaning of a given word. The assessment was administered after the intervention concluded, in the spring of kindergarten. In the sample, ETW scores ranged from 0 to 52 (the maximum score), with a mean of 13.65 and a standard deviation of 11.10. To answer the research question, the researchers used two fixed effects and their interaction: `TRT` (1 = treatment and 0 = control) and PPVT (Peabody Picture Vocabulary Test, which measures students' vocabulary before the intervention; `PPVT_FallK`).
+
+> Coyne, M. D., McCoach, D. B., Ware, S., Austin, C. R., Loftus-Rattan, S. M., & Baker, D. L. (2019). Racing Against the Vocabulary Gap: Matthew Effects in Early Vocabulary Instruction and Intervention. *Exceptional Children*, *85*(2), 163--179. <https://doi.org/10.1177/0014402918789162>
+
+## Load packages
+
+```{r}
+library(tidyverse)
+library(lme4) # lmer mixed modeling
+library(emmeans) # testing marginal means 
+library(ggeffects) # plotting 
+library(interactions) # plotting interactions and testing 
+
+```
+
+## Load data
+
+```{r}
+# read in data file 'Ch3_MLM_R_reduced.csv`
+
+```
+
+1.  Contrast code the treatment variable
+
+```{r}
+
+```
+
+2.  Center **`PPVT_Fallk.`** While we did not talk about centering. There are two kinds of centering you can do in MLMs. One is cluster-mean centering ($x_{ij}−x_j$) where we subtract each person's cluster mean from each observation in that cluster. There is also grand-mean centering ($x_i−x$)subtract the overall mean from each observation). Group mean centering level-1 predictors allows us to test the pure within-cluster effect without confounding from between-cluster effects. Use the code from here: https://psy504-advanced-stats.netlify.app/slides/mlm/mlm-speaker#/group-mean-center-in-r to group mean center. For more information on centering I am including a link to a blog post by Patrick Curran: https://centerstat.org/centering/.
+
+```{r}
+
+```
+
+3.  How much missing data is in our dataset? What variables have missing data and how much?
+
+    ::: callout-note
+    If the missing data is only on the DV, multilevel modeling is generally pretty good at handling it. Missingness on the predictors is another story...
+    :::
+
+```{r}
+
+```
+
+4.  Fit an unconditional means (null model)
+
+```{r}
+
+```
+
+-   What is the ICC? Calculate it by hand from the output.
+
+```{r}
+
+```
+
+-   Is multilevel modeling warranted here?
+
+5.  Build up from the last model. Fit a model that includes all main effects (level 1 variables)
+
+```{r}
+
+
+```
+
+6.  Fit a model that includes the fixed interaction between the level-1 variables.
+
+```{r}
+
+
+```
+
+7.  Fit the maximal model warranted by this design
+
+```{r}
+
+```
+
+8.  Compare the models. Which one is the best?
+
+```{r}
+
+
+
+```
+
+9.  With the maximal model, test if the interaction is warranted in the model.
+
+```{r}
+
+```
+
+10. Using the maximal model:
+
+-   Test model assumptions
+
+```{r}
+
+
+```
+
+-   Which fixed effects are significant? Follow these up with the appropriate tests (e.g., simple slopes analysis if interaction is significant).
+
+```{r}
+
+
+
+```
+
+```{r}
+
+```
+
+-   Evaluate the variance components of your model.
+
+    ```{r}
+
+    ```
+
+    -   Calculate the pseudo-$R^2$ to explain how much of the variance the fixed effects portion and random parts explain
+
+        ```{r}
+
+
+        ```
+
+-   Visualize the random intercepts and slopes in your model
+
+    ```{r}
+
+
+    ```
+
+-   Create a table with a summary of your model information
+
+```{r}
+
+```
+
+11. Visualize the interaction between treatment and PPVT score on ETW (I would check out the `interactions` package. They have some nice features for plotting interactions.)
+
+    ```{r}
+    ```
+
+12. Write-up the results of your MLM model in a paragraph or two
